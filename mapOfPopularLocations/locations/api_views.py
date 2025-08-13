@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets, filters
+from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import LocationSerializer, ReviewSerializer
@@ -19,9 +20,14 @@ from .models import Location, Review
 
 @api_view(['GET'])
 def getLocation(request, id):
-    location = Location.objects.get(id=id)
-    serializer = LocationSerializer(location, many=False)
-    return Response(serializer.data)
+    data = cache.get('location')
+    
+    if not data:
+        location = Location.objects.get(id=id)
+        data = LocationSerializer(location, many=False).data
+        cache.set('location', data, timeout=300)
+    
+    return Response(data)
 
 
 @api_view(['POST'])
