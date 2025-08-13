@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.contrib.auth.mixins import LoginRequiredMixin
-
 from django.contrib.auth.models import User
+
 from .form import CustomUserCreationForm
 
 
