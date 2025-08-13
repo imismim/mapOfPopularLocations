@@ -1,0 +1,67 @@
+
+{% if page == 'register' %}
+<div>
+  <div>
+    <div>
+      <h3>Account SignUp</h3>
+      <p>Create a new developer account</p>
+    </div>
+
+    <form action="{% url 'register' %}" method='POST' class="form auth__form">
+      {% csrf_token %}
+      
+      {% for field in form %}
+        <label for="formInput#text">{{field.label}}</label>
+        {{field}}
+
+        {% if field.errors %}
+          <p style="color: red;">{{ field.errors|first }}</p>
+        {% endif %}
+
+      {% endfor %}
+      <div >
+        <input class="btn btn--sub btn--lg" type="submit" value="Sign Up" />
+      </div>
+
+    </form>
+    <div>
+      <p>Already have an Account?</p>
+      <a href="{% url 'login' %}">Log In</a>
+    </div>
+  </div>
+</div>
+{% else %}
+<div>
+  <div>
+    <div>
+      <h3>Account Login</h3>
+      <p>Hello Developer, Welcome Back!</p>
+    </div>
+    <form action="" method="POST">
+      {% csrf_token %}
+      <!-- Input:Username -->
+      <div>
+        <label for="formInput#text">Username: </label>
+        <input id="formInput#text" type="text" name="username"
+          placeholder="Enter your username..." />
+      </div>
+
+      <!-- Input:Password -->
+      <div>
+        <label for="formInput#password">Password: </label>
+        <input id="formInput#passowrd" type="password" name="password"
+          placeholder="••••••••" />
+      </div>
+      <div>
+        <input type="submit" value="Log In" />
+        <a href="{% url 'reset_password'%}">Forget Password?</a>
+      </div>
+    </form>
+
+    <div>
+      <p>Don`t have an Account?</p>
+      <a href="{% url 'register' %}">Sign Up</a>
+    </div>
+  </div>
+</div>
+{% endif %}
