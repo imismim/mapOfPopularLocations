@@ -8,6 +8,7 @@ class Location(models.Model):
     owner = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+    category = models.CharField(max_length=200, null=True)
     link_location = models.CharField(max_length=2000, null=True, blank=True)
     vote_total = models.IntegerField(default=0, null=True, blank=True)
     
@@ -15,6 +16,10 @@ class Location(models.Model):
     id = models.UUIDField(default=uuid.uuid4, unique=True,
                           primary_key=True, editable=False)
     
+    
+    def updateVoteTotal(self):
+        self.vote_total = Review.objects.filter(location=self).count()
+            
     def __str__(self):
         return self.title
     

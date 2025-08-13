@@ -1,17 +1,20 @@
+import csv
+from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import viewsets, filters
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import LocationSerializer, ReviewSerializer
 from .models import Location, Review
 
 
-@api_view(['GET'])
-def getLocations(request):
-    locations = Location.objects.all()
-    serializer = LocationSerializer(locations, many=True)
-    return Response(serializer.data)
+# @api_view(['GET'])
+# def getLocations(request):
+#     locations = Location.objects.all()
+#     serializer = LocationSerializer(locations, many=True)
+#     return Response(serializer.data)
 
 
 @api_view(['GET'])
@@ -70,6 +73,7 @@ def createReview(request, id):
     serializer = ReviewSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save(owner=request.user, location=location)
+        location.updateVoteTotal()
         return Response(serializer.data)
     return Response(serializer.errors)
 
@@ -81,5 +85,39 @@ def deleteReview(request, id):
     except Review.DoesNotExist:
         return Response({'error': 'Review not found'})
     
+    location = review.location
     review.delete()
+    location.updateVoteTotal()
     return Response({'message': 'Review was deleted'})
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    
+    
+    filterset_fields = ['vote_total', 'category'] 
+
+    search_fields = ['title', 'description']
+    
+    
+@api_view(['GET'])
+def exportLocations(request):
+    formatType = request.GET.get('format', 'json').lower()
+
+    locations = Location.objects.all()
+
+    if formatType == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="locations.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Title', 'Description', 'Link', 'Vote Total', 'Created'])
+        for loc in locations:
+            writer.writerow([loc.id, loc.title, loc.description, loc.link_location, loc.vote_total, loc.created])
+        return response
+
+    else: 
+        serializer = LocationSerializer(locations, many=True)
+        return Response(serializer.data)

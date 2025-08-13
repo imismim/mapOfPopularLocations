@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-yz#i90%-^m)h)gnnhr7%*-(@6mn1td@3zi_5#l&&7q4x_cd9m@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.tuple('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'locations.apps.LocationsConfig',
 
-    'rest_framework',    
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +56,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+    ],
+}
 
 ROOT_URLCONF = 'mapOfPopularLocations.urls'
 
@@ -83,8 +90,12 @@ WSGI_APPLICATION = 'mapOfPopularLocations.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'mapOfPopularLocations',
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST'),  
+        'PORT': env('DB_PORT'),       
     }
 }
 
