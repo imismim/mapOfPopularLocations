@@ -1,14 +1,15 @@
-import csv
+import pandas as pd
 from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets, filters
 from django.core.cache import cache
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .serializers import LocationSerializer, ReviewSerializer
-from .models import Location, Review
+from .models import Location, Review, ReviewSubscription
 
 
 # @api_view(['GET'])
@@ -110,20 +111,43 @@ class LocationViewSet(viewsets.ModelViewSet):
     
 @api_view(['GET'])
 def exportLocations(request):
-    formatType = request.GET.get('format', 'json').lower()
-
+    formatType = request.GET.get('format').lower()
+    
     locations = Location.objects.all()
-
     if formatType == 'csv':
-        response = HttpResponse(content_type='text/csv')
+        data = [{
+            'ID': loc.id,
+            'Title': loc.title,
+            'Description': loc.description,
+            'Link': loc.link_location,
+            'Vote Total': loc.vote_total,
+            'Created': loc.created
+        } for loc in locations]
+
+        df = pd.DataFrame(data)
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = 'attachment; filename="locations.csv"'
 
-        writer = csv.writer(response)
-        writer.writerow(['ID', 'Title', 'Description', 'Link', 'Vote Total', 'Created'])
-        for loc in locations:
-            writer.writerow([loc.id, loc.title, loc.description, loc.link_location, loc.vote_total, loc.created])
+        df.to_csv(response, index=False)
         return response
-
     else: 
         serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data)
+    
+    
+    
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def subscribeToLocation(request, id):
+    location = get_object_or_404(Location, id=id)
+    subscription, created = ReviewSubscription.objects.get_or_create(
+        user=request.user,
+        location=location
+    )
+    
+    if not subscription.active:
+        subscription.active = True
+        subscription.save()
+
+    return Response({'message': 'Subscribed successfully'})

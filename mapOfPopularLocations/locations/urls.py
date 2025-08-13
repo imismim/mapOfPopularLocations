@@ -17,6 +17,7 @@ urlpatterns = [
     
     path("locations/<str:id>/add-review", api_views.createReview, name="createReview"),
     path("reviews/<str:id>/delete", api_views.deleteReview, name="deleteReview"),
+    path("reviews/<str:id>/subscribe", api_views.subscribeToLocation, name="subscribeToLocation"),
     path('', include(router.urls)),
     
 ]
